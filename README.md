@@ -2,6 +2,19 @@
 
 A usb midi keyboard iii script for Grid Zeros and Ones
 
+## Prerequisites
+
+* Python 3.11
+* A One or Zero grid with >=[250114](https://github.com/monome/iii/releases/tag/250114) or newer iii firmware.
+  
+*iii [Grid Compatibility](https://github.com/monome/iii?tab=readme-ov-file#compatibility) varies*
+
+Follow `diii` install steps from the [monome iii repo](https://github.com/monome/iii?tab=readme-ov-file#diii)
+
+## How to Install
+
+Run `diii upload iiiano.lua`
+
 ## Features
 
 - 8 x 11 grid of keys
@@ -15,7 +28,16 @@ A usb midi keyboard iii script for Grid Zeros and Ones
 
 ## TODO
 
-- Add grid diagrams to readme
+- Add [grid diagrams](https://tyleretters.github.io/GridStation/) to readme
+- Document features
+
+## Manual
+
+### Control Layout
+
+![One Grid UI]()
+
+![Zero Grid UI]()
 
 ## Idea Brainstorm
 
