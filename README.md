@@ -2,6 +2,8 @@
 
 A usb midi keyboard iii script for Grid Zeros and Ones
 
+![Grid One Main view](/images/main_view.png)
+
 ## Prerequisites
 
 * Python 3.11
@@ -27,6 +29,10 @@ Run `diii upload iiiano.lua`
 * Octave transpose
 * 16 velocities
   * Selected note brightness matches velocity value
+* Random velocity Generator
+  * Configurable lower and upper limits
+  * Last played velocity is displayed on the 16 velocity grid
+  * Random type?
 
 ## TODO
 

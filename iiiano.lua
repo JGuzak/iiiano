@@ -149,6 +149,26 @@ local SPRITES = {
     { 0,  0,  15, 0, 0,  15, 0,  0, 15, 0,  15 },
     { 0,  0,  15, 0, 0,  15, 0,  0, 15, 0,  15 }
   },
+    ["chromatic"] = {
+    { 0, 15, 0, 0, 15, 0, 15, 0, 15, 15, 0 },
+    { 15, 0, 15, 0, 15, 0, 15, 0, 15, 0, 15 },
+    { 15, 0, 0, 0, 15, 0, 15, 0, 15, 0, 15 },
+    { 15, 0, 0, 0, 15, 0, 15, 0, 15, 0, 15 },
+    { 15, 0, 0, 0, 15, 15, 15, 0, 15, 15, 0 },
+    { 15, 0, 0, 0, 15, 0, 15, 0, 15, 0, 15 },
+    { 15, 0, 15, 0, 15, 0, 15, 0, 15, 0, 15 },
+    { 0, 15, 0, 0, 15, 0, 15, 0, 15, 0, 15 }
+  },
+    ["in_key"] = {
+    { 15, 0, 15, 0, 15, 15, 15, 0, 15, 0, 15 },
+    { 15, 0, 15, 0, 15, 0, 0, 0, 15, 0, 15 },
+    { 15, 0, 15, 0, 15, 0, 0, 0, 15, 0, 15 },
+    { 15, 0, 15, 0, 15, 0, 0, 0, 15, 0, 15 },
+    { 15, 15, 0, 0, 15, 15, 0, 0, 0, 15, 0 },
+    { 15, 0, 15, 0, 15, 0, 0, 0, 0, 15, 0 },
+    { 15, 0, 15, 0, 15, 0, 0, 0, 0, 15, 0 },
+    { 15, 0, 15, 0, 15, 15, 15, 0, 0, 15, 0 }
+  },
   ["major"] = {
     { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
     { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
@@ -250,7 +270,7 @@ local SPRITES = {
     { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }
   },
 }
-local KEYBED_OFFSET_MODES = {"oct", "4ths", "3rds"}
+local KEYBED_OFFSET_MODES = {"oct", "3rds", "4ths"}
 
 local NOTE_NAMES = { "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" }
 local SCALES = {
@@ -266,14 +286,15 @@ local SCALES = {
   melodic_minor = { 1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1 },
 }
 
+-- -1: undefined
 -- 0: the keybed
 -- 1: the active settings layer
 -- 2-11: settings layer selection
 --  2: performance layer
 --  3: keybed edit layer
 local PRIMARY_DISPLAY = {
-  { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 2, 2, 2 },
-  { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 2, 2, 2 },
+  { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 2, -1, -1 },
+  { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, -1, -1, -1, -1 },
   { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1 },
   { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1 },
   { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1 },
@@ -286,11 +307,12 @@ local SETTINGS_LAYERS = {
   [""] = {},
   -- 0: unused
   -- 1: transpose
-  -- 2: velocity
-  -- 3: random velocity
+  -- 2: 16 static velocity
+  -- 3: random velocity controls
+  -- 4: static vs random velocity toggle
   ["performance"] = {
-    { 0, 0, 0, 0, 0 },
-    { 3, 3, 3, 3, 3 },
+    { 4, 3, 3, 3, 3 },
+    { 4, 3, 3, 3, 3 },
     { 1, 2, 2, 2, 2 },
     { 1, 2, 2, 2, 2 },
     { 1, 2, 2, 2, 2 },
@@ -322,45 +344,54 @@ local SETTINGS_LAYERS = {
 }
 
 local settings_layer_order = {
-  "performance", "", "", "", "keybed_edit",
-  "", "", "", "", "midi" }
+  "performance", "keybed_edit", "midi", "", ""}
 
 -- UI constants
 local MAX_X = grid_size_x()
 local MAX_Y = grid_size_y()
 local GRID_VARIANT = (MAX_Y == 16 and MAX_X == 16) and "Zero" or (MAX_Y == 8 and MAX_X == 8) and "One" or nil
-local GRID_VERTICAL_OFFSET = (GRID_VARIANT == "Zero") and 8 or 0
+local GRID_PRIMARY_VERTICAL_OFFSET = (GRID_VARIANT == "Zero") and 8 or 0
+local KEYBED_WIDTH = 11
+local KEYBED_HEIGHT = 8
 
+-- LED Brightnesses
 local MAX_BRIGHTNESS = 15
 local SETTINGS_LAYER_SELECT_INACTIVE = 2
-local ROOT_NOTE_BRIGHTNESS = 10
-local NOTE_IN_SCALE_BRIGHTNESS = ROOT_NOTE_BRIGHTNESS - 7
 local TRANSPOSE_INACTIVE_BRIGHTNESS = 2
 local TRANSPOSE_ACTIVE_BRIGHTNESS = 10
-local SELECTED_VELOCITY_TOGGLE_BRIGHTNESS = 2
+local METRO_TOGGLE_BRIGHTNESS = 2
 local VELOCITY_METRO_RATE_MS = 250
+local ROOT_NOTE_BRIGHTNESS = 10
+local NOTE_IN_SCALE_BRIGHTNESS = ROOT_NOTE_BRIGHTNESS - 4
 local KEYBED_OFFSET_ACTIVE_BRIGHTNESS = 8
-local KEYBED_OFFSET_INACTIVE_BRIGHTNESS = 0
+local KEYBED_OFFSET_INACTIVE_BRIGHTNESS = 2
+local RANDOM_VELOCITY_LIMIT_SELECT_BRIGHTNESS = 8
+
+-- Misc
+local RANDOM_VELOCITY_MIN_DEFAULT = 30
+local RANDOM_VELOCITY_MAX_DEFAULT = 110
 
 -- Globals
 
 local current_scale = "major"
-local current_root = 0
+local root_note = 0
 local global_transpose = 0
+local velocity_mode = "static"
+local random_velocity_selected_limit = "low"
+local random_velocity_min = RANDOM_VELOCITY_MIN_DEFAULT
+local random_velocity_max = RANDOM_VELOCITY_MAX_DEFAULT
+local random_velocity_invert = false
+local random_velocity_skew = 0
 local static_velocity_metro_id = nil
 local static_velocity = 104
 
 local keybed_row_offset = "4ths"
+local keybed_in_key_mode = false
+local keybed_edit_button_held = false
+local active_keybed_sprite = nil
 local pressed_keys = {}
-local held_settings_keys = {}
-local keybed_sprite_mode_active = false
-local settings_layer = SETTINGS_LAYERS[settings_layer_order[1]]
-local root_note_button_held = false
-local keybed_layout_button_held = false
-local selected_root_note_button = nil
-local current_zone3_button = nil
-
 local transposed_cache = {}
+local settings_layer = SETTINGS_LAYERS[settings_layer_order[1]]
 
 function init()
   static_velocity_metro_id = metro.new(render_selected_velocity, VELOCITY_METRO_RATE_MS)
@@ -371,8 +402,12 @@ end
 ------------------------------------------------------------------------
 -- Keybed/MIDI note helpers
 
+function get_key_id(x, y)
+  return x * 100 + y
+end
+
 function is_root_note(midi_note)
-  return (midi_note % 12) == current_root
+  return (midi_note % 12) == root_note
 end
 
 function transpose_scale(scale_pattern, semitones)
@@ -391,7 +426,7 @@ function transpose_scale(scale_pattern, semitones)
 end
 
 function calculate_midi_note(x, y)
-  local base_note = 24 + current_root
+  local base_note = 24 + root_note
   local row_offset = 0
   if keybed_row_offset == "oct" then
     row_offset = (8 - y) * 8
@@ -405,8 +440,8 @@ end
 
 function is_note_in_scale(midi_note)
   local scale = SCALES[current_scale]
-  local transposed_scale = transpose_scale(scale, current_root)
-  local note_in_octave = (midi_note - current_root) % 12
+  local transposed_scale = transpose_scale(scale, root_note)
+  local note_in_octave = (midi_note - root_note) % 12
   local scale_index = note_in_octave + 1
   if scale_index < 1 or scale_index > 12 then
     return false
@@ -454,9 +489,16 @@ function handle_keybed_press(x, y, z)
     local midi_note = calculate_midi_note(x, y)
     local note_name = NOTE_NAMES[(midi_note % 12) + 1]
     local octave = math.floor(midi_note / 12) - 1
-    print("Note ON: " .. note_name .. octave .. " MIDI " .. midi_note)
-    midi_note_on(midi_note, static_velocity, 1)
-    pressed_keys[key_id] = { x = x, y = y, note = midi_note }
+    local note_velocity = nil
+    if velocity_mode == "random" then
+      -- note_velocity = static_velocity
+    elseif velocity_mode == "static" then
+      note_velocity = static_velocity
+    end
+    
+    print("Note ON: " .. note_name .. octave .. note_velocity .. " MIDI " .. midi_note)
+    midi_note_on(midi_note, note_velocity, 1)
+    pressed_keys[key_id] = { x = x, y = y, note = midi_note, velocity = note_velocity }
 
     highlight_same_notes()
     grid_refresh()
@@ -497,7 +539,7 @@ function set_scale(scale_name)
 end
 
 function set_root(root_note)
-  current_root = root_note % 12
+  root_note = root_note % 12
   transposed_cache = {}
   update_grid_leds()
 end
@@ -551,11 +593,11 @@ function get_velocity_from_velocity_index(i)
 end
 
 function get_velocity_index_from_velocity(v)
-  return clamp(round(linlin(10, 127, 1, 16, v), 1), 1, 16)
+  return clamp(round(linlin(10, 127, 1, 16, v), 1), 0, 16)
 end
 
 
-function get_root_note_button_index()
+function get_root_note_button_index(x, y)
   local button_index = 0
   if y == 5 and x >= 15 then
     button_index = x - 14  -- C, C#
@@ -569,94 +611,81 @@ end
 ------------------------------------------------------------------------
 -- Button handlers
 
-function handle_settings_press(x, y, z)
-  local key_id = x * 100 + y
 
+function handle_performance_layer_press(x, y, z, settings_layer_zone)
+  if z == 1 then
+    if settings_layer_zone == 1 then
+      if y == 8 then
+        global_transpose = clamp(global_transpose - 1, -2, 2)
+      elseif y == 5 then
+        global_transpose = clamp(global_transpose + 1, -2, 2)
+      else
+        global_transpose = 0
+      end
+      print("global transpose set to: " .. global_transpose)
+      update_grid_leds()
+    elseif settings_layer_zone == 2 then
+      local velocity_index = get_velocity_index(x, y)
+      static_velocity = get_velocity_from_velocity_index(velocity_index)
+      print("Velocity set to: " .. static_velocity)
+      update_grid_leds()
+    end
+  end
+end
+
+function handle_keybed_edit_layer_press(x, y, z, settings_layer_zone)
+  local dirty_grid = false
+  if z == 1 then
+    keybed_edit_button_held = true
+  else
+    keybed_edit_button_held = false
+  end
+
+  if settings_layer_zone == 1 then -- set root note
+    root_note = (get_root_note_button_index(x, y) - 1) % 12
+    transposed_cache = {}
+    active_keybed_sprite = get_note_name(root_note)
+    print("Root note changed to: " .. get_note_name(root_note))
+    dirty_grid = true
+  elseif settings_layer_zone == 2 then -- set keybed row offset mode
+    local offset_mode = KEYBED_OFFSET_MODES[x - 13]
+    keybed_row_offset = offset_mode
+    active_keybed_sprite = offset_mode
+    print("Offset changed to: " .. offset_mode)
+    dirty_grid = true
+  elseif settings_layer_zone == 3 then -- set scale
+  elseif settings_layer_zone == 4 then -- toggle keybed in key mode
+    if z == 1 then
+      keybed_in_key_mode = not keybed_in_key_mode
+      print("In key mode: " .. tostring(keybed_in_key_mode))
+      if keybed_in_key_mode then
+         active_keybed_sprite =  "in_key"
+      else
+        active_keybed_sprite = "chromatic"
+      end
+    end
+    dirty_grid = true
+  end
+
+  if dirty_grid then
+    update_grid_leds()
+  end
+end
+
+function handle_settings_press(x, y, z)
   local x_offset = 11
   local y_offset = 2
   local layer_y = y - y_offset
   local layer_x = x - x_offset
   if layer_y >= 1 and layer_y <= #settings_layer and
-      layer_x >= 1 and layer_x <= #settings_layer[layer_y] and
-      z == 1 then
+      layer_x >= 1 and layer_x <= #settings_layer[layer_y] then
     local settings_layer_zone = settings_layer[layer_y][layer_x]
     if settings_layer == SETTINGS_LAYERS["performance"] then
-      if settings_layer_zone == 1 then
-        if y == 8 then
-          global_transpose = clamp(global_transpose - 1, -2, 2)
-        elseif y == 5 then
-          global_transpose = clamp(global_transpose + 1, -2, 2)
-        else
-          global_transpose = 0
-        end
-        print("global transpose set to: " .. global_transpose)
-        update_grid_leds()
-      elseif settings_layer_zone == 2 then
-        local velocity_index = get_velocity_index(x, y)
-        static_velocity = get_velocity_from_velocity_index(velocity_index)
-        print("Velocity set to: " .. static_velocity)
-        update_grid_leds()
-      end
+      handle_performance_layer_press(x, y, z, settings_layer_zone)
     elseif settings_layer == SETTINGS_LAYERS["keybed_edit"] then
-      if settings_layer_zone == 1 then
-        local button_index = get_root_note_button_index()
-        if button_index >= 1 and button_index <= 12 then
-          current_root = (button_index - 1) % 12
-          selected_root_note_button = key_id
-          root_note_button_held = true
-          transposed_cache = {}
-          print("Root note changed to: " .. get_note_name(current_root))
-
-          sprite_mode_active = true
-          local root_note_name = get_note_name(current_root)
-          render_keybed_sprite(root_note_name)
-          update_grid_leds()
-        end
-      elseif settings_layer_zone == 2 then
-        local button_index = x - 13
-        keybed_row_offset = KEYBED_OFFSET_MODES[button_index]
-        current_zone3_button = key_id
-        keybed_layout_button_held = true
-        print("Offset changed to: " .. keybed_row_offset)
-
-        sprite_mode_active = true
-        render_keybed_sprite(keybed_row_offset)
-        update_grid_leds()
-      elseif settings_layer_zone == 3 then
-      else
-        held_settings_keys[key_id] = { x = x, y = y, zone = settings_layer_zone }
-
-        if not sprite_mode_active then
-          sprite_mode_active = true
-          local root_note_name = get_note_name(current_root)
-          render_keybed_sprite(root_note_name)
-          update_grid_leds()
-        end
-      end
+      handle_keybed_edit_layer_press(x, y, z, settings_layer_zone)
     elseif settings_layer == SETTINGS_LAYERS["midi"] then
     else
-      -- if settings_layer_zone == 1 and selected_root_note_button == key_id then
-      --   root_note_button_held = false
-      --   selected_root_note_button = nil
-      --   if not keybed_layout_button_held and not is_sprite_mode_active() then
-      --     sprite_mode_active = false
-      --     update_grid_leds()
-      --   end
-      -- elseif settings_layer_zone == 3 and current_zone3_button == key_id then
-      --   keybed_layout_button_held = false
-      --   current_zone3_button = nil
-      --   if not root_note_button_held and not is_sprite_mode_active() then
-      --     sprite_mode_active = false
-      --     update_grid_leds()
-      --   end
-      -- elseif held_settings_keys[key_id] then
-      --   held_settings_keys[key_id] = nil
-
-      --   if not root_note_button_held and not keybed_layout_button_held and not is_sprite_mode_active() then
-      --     sprite_mode_active = false
-      --     update_grid_leds()
-      --   end
-      -- end
     end
   end
 end
@@ -669,60 +698,59 @@ function handle_settings_layer_select_press(x, y, z)
       return
     end
     settings_layer = SETTINGS_LAYERS[settings_layer_order[settings_layer_index]]
-    if settings_layer_index == 1 then
+    if settings_layer_order[settings_layer_index] == "performance" then
       if static_velocity_metro_id ~= nil then
         metro.stop(static_velocity_metro_id)
       end
       static_velocity_metro_id = metro.new(render_selected_velocity, VELOCITY_METRO_RATE_MS)
-    else
+    elseif settings_layer_order[settings_layer_index] == "keybed_edit" then
+    end
+
+    if settings_layer_order[settings_layer_index] ~= "performance" then
       if static_velocity_metro_id ~= nil then
         metro.stop(static_velocity_metro_id)
       end
     end
+
     print("Settings layer changed to: " .. settings_layer_order[settings_layer_index])
     update_grid_leds()
   end
 end
 
 function grid(x, y, z)
-  if y <= 8 and x <= 16 then
-    local zone = PRIMARY_DISPLAY[y][x]
-    if zone == 0 then
-      handle_keybed_press(x, y, z)
-    elseif zone == 1 then
-      handle_settings_press(x, y, z)
-    elseif zone == 2 then
-      handle_settings_layer_select_press(x, y, z)
-    end
+  local key_id = x * 100 + y
+  local zone = PRIMARY_DISPLAY[y][x]
+  if zone == 0 then
+    handle_keybed_press(x, y, z)
+  elseif zone == 1 then
+    handle_settings_press(x, y, z)
+  elseif zone == 2 then
+    handle_settings_layer_select_press(x, y, z)
   end
 end
 
 ------------------------------------------------------------------------
 -- Sprite helpers
 
-function is_sprite_mode_active()
-  return next(held_settings_keys) ~= nil
-end
-
 function render_keybed_sprite(n)
   local sprite = SPRITES[n]
   if not sprite then return end
 
-  for x = 1, 11 do
-    for y = 1, 8 do
+  for x = 1, KEYBED_WIDTH do
+    for y = 1, KEYBED_HEIGHT do
       if PRIMARY_DISPLAY[y][x] == 0 then
         grid_led(x, y, 0)
       end
     end
   end
 
-  for sprite_y = 1, 8 do
+  for sprite_y = 1, KEYBED_HEIGHT do
     local row = sprite[sprite_y]
     if row then
-      for sprite_x = 1, 11 do
+      for sprite_x = 1, KEYBED_WIDTH do
         local grid_x = sprite_x
         local grid_y = sprite_y
-        if grid_x <= 11 and grid_y <= 8 and row[sprite_x] and row[sprite_x] > 0 then
+        if grid_x <= KEYBED_WIDTH and grid_y <= KEYBED_HEIGHT and row[sprite_x] and row[sprite_x] > 0 then
           grid_led(grid_x, grid_y, row[sprite_x])
         end
       end
@@ -734,13 +762,13 @@ end
 -- LED render helpers
 
 function render_keybed()
-  for x = 1, 11 do
-    for y = 1, 8 do
+  for x = 1, KEYBED_WIDTH do
+    for y = 1, KEYBED_HEIGHT do
       if PRIMARY_DISPLAY[y][x] == 0 then
         local key_id = x * 100 + y
         if pressed_keys[key_id] then
-          print("velocity: " .. get_velocity_index_from_velocity(static_velocity))
-          grid_led(x, y, get_velocity_index_from_velocity(static_velocity))
+          print("velocity: " .. get_velocity_index_from_velocity(pressed_keys[key_id].velocity))
+          grid_led(x, y, get_velocity_index_from_velocity(pressed_keys[key_id].velocity))
         else
           local midi_note = calculate_midi_note(x, y)
           local brightness = 0
@@ -765,9 +793,61 @@ function render_selected_velocity()
     if get_time() % (VELOCITY_METRO_RATE_MS * 2) < VELOCITY_METRO_RATE_MS then
       grid_led(x, y, MAX_BRIGHTNESS)
     else
-      grid_led(x, y, SELECTED_VELOCITY_TOGGLE_BRIGHTNESS)
+      grid_led(x, y, METRO_TOGGLE_BRIGHTNESS)
     end
     grid_refresh()
+  end
+end
+
+function render_performance_layer(x, y, settings_layer_zone)
+  if settings_layer_zone == 1 then -- transpose
+    if y == 8 and global_transpose <= -1 then
+      grid_led(x, y, TRANSPOSE_ACTIVE_BRIGHTNESS)
+    elseif y == 5 and global_transpose >= 1 then
+      grid_led(x, y, TRANSPOSE_ACTIVE_BRIGHTNESS)
+    elseif y == 6 and (global_transpose == 0 or global_transpose == 1) then
+      grid_led(x, y, TRANSPOSE_ACTIVE_BRIGHTNESS)
+    elseif y == 7 and (global_transpose == 0 or global_transpose == -1) then
+      grid_led(x, y, TRANSPOSE_ACTIVE_BRIGHTNESS)
+    else
+      grid_led(x, y, TRANSPOSE_INACTIVE_BRIGHTNESS)
+    end
+  elseif settings_layer_zone == 2 then -- velocity
+    local velocity_index = get_velocity_index(x, y)
+    selected_velocity_index = get_velocity_index_from_velocity(static_velocity)
+    if selected_velocity_index ~= velocity_index then
+      grid_led(x, y, velocity_index)
+    end
+  elseif settings_layer_zone == 3 then -- velocity randomizer
+    -- Render random velocity buttons
+  end
+end
+
+function render_keybed_edit_layer(x, y, settings_layer_zone)
+  if settings_layer_zone == 1 then -- root note
+    local button_index = get_root_note_button_index(x, y)
+
+  elseif settings_layer_zone == 2 then -- keybed offset
+    local button_index = x - 13
+    if KEYBED_OFFSET_MODES[button_index] == keybed_row_offset then
+      if keybed_edit_button_held then
+        grid_led(x, y, clamp(KEYBED_OFFSET_ACTIVE_BRIGHTNESS + 2, 0, 15))
+      else
+        grid_led(x, y, KEYBED_OFFSET_ACTIVE_BRIGHTNESS)
+      end
+    else
+      grid_led(x, y, KEYBED_OFFSET_INACTIVE_BRIGHTNESS)
+    end
+  elseif settings_layer_zone == 3 then -- scale
+    grid_led(x, y, 2)
+  elseif settings_layer_zone == 4 then -- keybed in key mode
+    local brightness
+    if keybed_in_key_mode then
+      brightness = MAX_BRIGHTNESS
+    else
+      brightness = 4
+    end
+    grid_led(x, y, brightness)
   end
 end
 
@@ -782,45 +862,9 @@ function render_settings_layer(x, y)
         layer_x >= 1 and layer_x <= #settings_layer[layer_y] then
       local settings_layer_zone = settings_layer[layer_y][layer_x]
       if settings_layer == SETTINGS_LAYERS["performance"] then
-        if settings_layer_zone == 1 then -- transpose
-          if y == 8 and global_transpose <= -1 then
-            grid_led(x, y, TRANSPOSE_ACTIVE_BRIGHTNESS)
-          elseif y == 5 and global_transpose >= 1 then
-            grid_led(x, y, TRANSPOSE_ACTIVE_BRIGHTNESS)
-          elseif y == 6 and (global_transpose == 0 or global_transpose == 1) then
-            grid_led(x, y, TRANSPOSE_ACTIVE_BRIGHTNESS)
-          elseif y == 7 and (global_transpose == 0 or global_transpose == -1) then
-            grid_led(x, y, TRANSPOSE_ACTIVE_BRIGHTNESS)
-          else
-            grid_led(x, y, TRANSPOSE_INACTIVE_BRIGHTNESS)
-          end
-        elseif settings_layer_zone == 2 then -- velocity
-          local velocity_index = get_velocity_index(x, y)
-          selected_velocity_index = get_velocity_index_from_velocity(static_velocity)
-          if selected_velocity_index ~= velocity_index then
-            grid_led(x, y, velocity_index)
-          end
-        elseif settings_layer_zone == 3 then -- velocity randomizer
-          -- Render random velocity buttons
-        end
+        render_performance_layer(x, y, settings_layer_zone)
       elseif settings_layer == SETTINGS_LAYERS["keybed_edit"] then
-        if settings_layer_zone == 1 then -- root note
-          local button_index = get_root_note_button_index()
-          
-        elseif settings_layer_zone == 2 then -- keybed offset
-          local button_index = x - 13
-          if KEYBED_OFFSET_MODES[button_index] == keybed_row_offset then
-            if keybed_layout_button_held and current_zone3_button == (x * 100 + y) then
-              grid_led(x, y, clamp(KEYBED_OFFSET_ACTIVE_BRIGHTNESS + 2, 0, 15))
-            else
-              grid_led(x, y, KEYBED_OFFSET_ACTIVE_BRIGHTNESS)
-            end
-          else
-            grid_led(x, y, KEYBED_OFFSET_INACTIVE_BRIGHTNESS)
-          end
-        elseif settings_layer_zone == 3 then -- scale
-          
-        end
+        render_keybed_edit_layer(x, y, settings_layer_zone)
       elseif settings_layer == SETTINGS_LAYERS["midi"] then
       end
     end
@@ -841,24 +885,15 @@ function update_grid_leds()
     end
   end
 
-  if keybed_sprite_mode_active then
-    if root_note_button_held then
-      local root_note_name = get_note_name(current_root)
-      render_keybed_sprite(root_note_name)
-    elseif keybed_layout_button_held then
-      render_keybed_sprite(keybed_row_offset)
-    else
-      local root_note_name = get_note_name(current_root)
-      render_keybed_sprite(root_note_name)
-    end
+  if keybed_edit_button_held then
+    render_keybed_sprite(active_keybed_sprite)
   else
     render_keybed()
   end
 
-  for x = 12, 16 do
-    for y = 1, 8 do
+  for x = 12, MAX_X do
+    for y = 1, MAX_Y do
       local zone = PRIMARY_DISPLAY[y][x]
-
       if zone == 1 or zone == 2 then
         render_settings_layer(x, y)
       end
@@ -866,6 +901,21 @@ function update_grid_leds()
   end
 
   grid_refresh()
+  -- print_grid_led_state()
+end
+
+function print_grid_led_state()
+  for y = 1, MAX_Y do
+    local line = nil
+    for x = 1, MAX_X do
+      if line == nil then
+        line = grid_led_get(x, y)
+      else
+        line = line .. " " .. grid_led_get(x, y)
+      end
+    end
+    print(line)
+  end
 end
 
 init()

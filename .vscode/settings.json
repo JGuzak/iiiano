@@ -11,7 +11,8 @@
         "round",
         "metro",
         "get_time",
-        "clamp"
+        "clamp",
+        "grid_led_get"
     ],
     "Lua.diagnostics.disable": [
         "lowercase-global"
