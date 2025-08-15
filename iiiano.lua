@@ -429,7 +429,7 @@ function calculate_midi_note(x, y)
   local base_note = 24 + root_note
   local row_offset = 0
   if keybed_row_offset == "oct" then
-    row_offset = (8 - y) * 8
+    row_offset = (8 - y) * (KEYBED_WIDTH + 1)
   elseif keybed_row_offset == "3rds" then
     row_offset = (8 - y) * 4
   elseif keybed_row_offset == "4ths" then
@@ -612,9 +612,9 @@ end
 -- Button handlers
 
 
-function handle_performance_layer_press(x, y, z, settings_layer_zone)
+function handle_performance_layer_press(x, y, z, menu_layer_zone)
   if z == 1 then
-    if settings_layer_zone == 1 then
+    if menu_layer_zone == 1 then
       if y == 8 then
         global_transpose = clamp(global_transpose - 1, -2, 2)
       elseif y == 5 then
@@ -624,7 +624,7 @@ function handle_performance_layer_press(x, y, z, settings_layer_zone)
       end
       print("global transpose set to: " .. global_transpose)
       update_grid_leds()
-    elseif settings_layer_zone == 2 then
+    elseif menu_layer_zone == 2 then
       local velocity_index = get_velocity_index(x, y)
       static_velocity = get_velocity_from_velocity_index(velocity_index)
       print("Velocity set to: " .. static_velocity)
@@ -633,7 +633,7 @@ function handle_performance_layer_press(x, y, z, settings_layer_zone)
   end
 end
 
-function handle_keybed_edit_layer_press(x, y, z, settings_layer_zone)
+function handle_keybed_edit_layer_press(x, y, z, menu_layer_zone)
   local dirty_grid = false
   if z == 1 then
     keybed_edit_button_held = true
@@ -641,20 +641,22 @@ function handle_keybed_edit_layer_press(x, y, z, settings_layer_zone)
     keybed_edit_button_held = false
   end
 
-  if settings_layer_zone == 1 then -- set root note
-    root_note = (get_root_note_button_index(x, y) - 1) % 12
+  if menu_layer_zone == 1 then -- set root note
     transposed_cache = {}
+    root_note = (get_root_note_button_index(x, y) - 1) % 12
     active_keybed_sprite = get_note_name(root_note)
     print("Root note changed to: " .. get_note_name(root_note))
     dirty_grid = true
-  elseif settings_layer_zone == 2 then -- set keybed row offset mode
+  elseif menu_layer_zone == 2 then -- set keybed row offset mode
     local offset_mode = KEYBED_OFFSET_MODES[x - 13]
     keybed_row_offset = offset_mode
     active_keybed_sprite = offset_mode
     print("Offset changed to: " .. offset_mode)
     dirty_grid = true
-  elseif settings_layer_zone == 3 then -- set scale
-  elseif settings_layer_zone == 4 then -- toggle keybed in key mode
+  elseif menu_layer_zone == 3 then -- set scale
+    transposed_cache = {}
+    dirty_grid = true
+  elseif menu_layer_zone == 4 then -- toggle keybed in key mode
     if z == 1 then
       keybed_in_key_mode = not keybed_in_key_mode
       print("In key mode: " .. tostring(keybed_in_key_mode))
@@ -679,11 +681,11 @@ function handle_settings_press(x, y, z)
   local layer_x = x - x_offset
   if layer_y >= 1 and layer_y <= #settings_layer and
       layer_x >= 1 and layer_x <= #settings_layer[layer_y] then
-    local settings_layer_zone = settings_layer[layer_y][layer_x]
+    local menu_layer_zone = settings_layer[layer_y][layer_x]
     if settings_layer == SETTINGS_LAYERS["performance"] then
-      handle_performance_layer_press(x, y, z, settings_layer_zone)
+      handle_performance_layer_press(x, y, z, menu_layer_zone)
     elseif settings_layer == SETTINGS_LAYERS["keybed_edit"] then
-      handle_keybed_edit_layer_press(x, y, z, settings_layer_zone)
+      handle_keybed_edit_layer_press(x, y, z, menu_layer_zone)
     elseif settings_layer == SETTINGS_LAYERS["midi"] then
     else
     end
@@ -799,8 +801,8 @@ function render_selected_velocity()
   end
 end
 
-function render_performance_layer(x, y, settings_layer_zone)
-  if settings_layer_zone == 1 then -- transpose
+function render_performance_layer(x, y, menu_layer_zone)
+  if menu_layer_zone == 1 then -- transpose
     if y == 8 and global_transpose <= -1 then
       grid_led(x, y, TRANSPOSE_ACTIVE_BRIGHTNESS)
     elseif y == 5 and global_transpose >= 1 then
@@ -812,22 +814,22 @@ function render_performance_layer(x, y, settings_layer_zone)
     else
       grid_led(x, y, TRANSPOSE_INACTIVE_BRIGHTNESS)
     end
-  elseif settings_layer_zone == 2 then -- velocity
+  elseif menu_layer_zone == 2 then -- velocity
     local velocity_index = get_velocity_index(x, y)
     selected_velocity_index = get_velocity_index_from_velocity(static_velocity)
     if selected_velocity_index ~= velocity_index then
       grid_led(x, y, velocity_index)
     end
-  elseif settings_layer_zone == 3 then -- velocity randomizer
+  elseif menu_layer_zone == 3 then -- velocity randomizer
     -- Render random velocity buttons
   end
 end
 
-function render_keybed_edit_layer(x, y, settings_layer_zone)
-  if settings_layer_zone == 1 then -- root note
+function render_keybed_edit_layer(x, y, menu_layer_zone)
+  if menu_layer_zone == 1 then -- root note
     local button_index = get_root_note_button_index(x, y)
 
-  elseif settings_layer_zone == 2 then -- keybed offset
+  elseif menu_layer_zone == 2 then -- keybed offset
     local button_index = x - 13
     if KEYBED_OFFSET_MODES[button_index] == keybed_row_offset then
       if keybed_edit_button_held then
@@ -838,9 +840,9 @@ function render_keybed_edit_layer(x, y, settings_layer_zone)
     else
       grid_led(x, y, KEYBED_OFFSET_INACTIVE_BRIGHTNESS)
     end
-  elseif settings_layer_zone == 3 then -- scale
+  elseif menu_layer_zone == 3 then -- scale
     grid_led(x, y, 2)
-  elseif settings_layer_zone == 4 then -- keybed in key mode
+  elseif menu_layer_zone == 4 then -- keybed in key mode
     local brightness
     if keybed_in_key_mode then
       brightness = MAX_BRIGHTNESS
@@ -860,11 +862,11 @@ function render_settings_layer(x, y)
     local layer_x = x - x_offset
     if layer_y >= 1 and layer_y <= #settings_layer and
         layer_x >= 1 and layer_x <= #settings_layer[layer_y] then
-      local settings_layer_zone = settings_layer[layer_y][layer_x]
+      local menu_layer_zone = settings_layer[layer_y][layer_x]
       if settings_layer == SETTINGS_LAYERS["performance"] then
-        render_performance_layer(x, y, settings_layer_zone)
+        render_performance_layer(x, y, menu_layer_zone)
       elseif settings_layer == SETTINGS_LAYERS["keybed_edit"] then
-        render_keybed_edit_layer(x, y, settings_layer_zone)
+        render_keybed_edit_layer(x, y, menu_layer_zone)
       elseif settings_layer == SETTINGS_LAYERS["midi"] then
       end
     end
