@@ -293,7 +293,7 @@ local SCALES = {
 --  2: performance layer
 --  3: keybed edit layer
 local PRIMARY_DISPLAY = {
-  { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 2, -1, -1 },
+  { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 2, 2, 2 },
   { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, -1, -1, -1, -1 },
   { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1 },
   { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1 },
@@ -311,6 +311,7 @@ local SETTINGS_LAYERS = {
   -- 3: random velocity controls
   -- 4: static vs random velocity toggle
   ["performance"] = {
+    { 0, 0, 0, 0, 0 },
     { 4, 3, 3, 3, 3 },
     { 4, 3, 3, 3, 3 },
     { 1, 2, 2, 2, 2 },
@@ -324,6 +325,7 @@ local SETTINGS_LAYERS = {
   -- 3: the scale selection buttons
   -- 4: in scale mode toggle
   ["keybed_edit"] = {
+    { 0, 0, 0, 0, 0 },
     { 3, 3, 3, 3, 3 },
     { 3, 3, 3, 3, 3 },
     { 3, 3, 3, 1, 1 },
@@ -336,6 +338,7 @@ local SETTINGS_LAYERS = {
   ["midi"] = {
     { 0, 0, 0, 0, 0 },
     { 0, 0, 0, 0, 0 },
+    { 0, 0, 0, 0, 0 },
     { 0, 1, 1, 1, 1 },
     { 0, 1, 1, 1, 1 },
     { 0, 1, 1, 1, 1 },
@@ -344,7 +347,7 @@ local SETTINGS_LAYERS = {
 }
 
 local settings_layer_order = {
-  "performance", "keybed_edit", "midi", "", ""}
+  "performance", "", "", "keybed_edit", "midi"}
 
 -- UI constants
 local MAX_X = grid_size_x()
@@ -549,9 +552,7 @@ end
 
 function get_settings_layer_index(x, y)
   if y == 1 then
-    return x - 11
-  elseif y == 2 then
-    return x - 6
+    return x - KEYBED_WIDTH
   end
 end
 
@@ -634,51 +635,38 @@ function handle_performance_layer_press(x, y, z, menu_layer_zone)
 end
 
 function handle_keybed_edit_layer_press(x, y, z, menu_layer_zone)
-  local dirty_grid = false
   if z == 1 then
     keybed_edit_button_held = true
+    if menu_layer_zone == 1 then -- set root note
+      transposed_cache = {}
+      root_note = (get_root_note_button_index(x, y) - 1) % 12
+      active_keybed_sprite = get_note_name(root_note)
+      print("Root note changed to: " .. get_note_name(root_note))
+    elseif menu_layer_zone == 2 then -- set keybed row offset mode
+        local offset_mode = KEYBED_OFFSET_MODES[x - 13]
+        keybed_row_offset = offset_mode
+        active_keybed_sprite = offset_mode
+        print("Offset changed to: " .. offset_mode)
+    elseif menu_layer_zone == 3 then -- set scale
+        transposed_cache = {}
+    elseif menu_layer_zone == 4 then -- toggle keybed in key mode
+        keybed_in_key_mode = not keybed_in_key_mode
+        print("In key mode: " .. tostring(keybed_in_key_mode))
+        if keybed_in_key_mode then
+          active_keybed_sprite =  "in_key"
+        else
+          active_keybed_sprite = "chromatic"
+      end
+    end
   else
     keybed_edit_button_held = false
   end
-
-  if menu_layer_zone == 1 then -- set root note
-    transposed_cache = {}
-    root_note = (get_root_note_button_index(x, y) - 1) % 12
-    active_keybed_sprite = get_note_name(root_note)
-    print("Root note changed to: " .. get_note_name(root_note))
-    dirty_grid = true
-  elseif menu_layer_zone == 2 then -- set keybed row offset mode
-    local offset_mode = KEYBED_OFFSET_MODES[x - 13]
-    keybed_row_offset = offset_mode
-    active_keybed_sprite = offset_mode
-    print("Offset changed to: " .. offset_mode)
-    dirty_grid = true
-  elseif menu_layer_zone == 3 then -- set scale
-    transposed_cache = {}
-    dirty_grid = true
-  elseif menu_layer_zone == 4 then -- toggle keybed in key mode
-    if z == 1 then
-      keybed_in_key_mode = not keybed_in_key_mode
-      print("In key mode: " .. tostring(keybed_in_key_mode))
-      if keybed_in_key_mode then
-         active_keybed_sprite =  "in_key"
-      else
-        active_keybed_sprite = "chromatic"
-      end
-    end
-    dirty_grid = true
-  end
-
-  if dirty_grid then
-    update_grid_leds()
-  end
+  update_grid_leds()
 end
 
 function handle_settings_press(x, y, z)
-  local x_offset = 11
-  local y_offset = 2
-  local layer_y = y - y_offset
-  local layer_x = x - x_offset
+  local layer_y = y - 1
+  local layer_x = x - KEYBED_WIDTH
   if layer_y >= 1 and layer_y <= #settings_layer and
       layer_x >= 1 and layer_x <= #settings_layer[layer_y] then
     local menu_layer_zone = settings_layer[layer_y][layer_x]
@@ -713,14 +701,12 @@ function handle_settings_layer_select_press(x, y, z)
         metro.stop(static_velocity_metro_id)
       end
     end
-
     print("Settings layer changed to: " .. settings_layer_order[settings_layer_index])
     update_grid_leds()
   end
 end
 
 function grid(x, y, z)
-  local key_id = x * 100 + y
   local zone = PRIMARY_DISPLAY[y][x]
   if zone == 0 then
     handle_keybed_press(x, y, z)
@@ -750,10 +736,8 @@ function render_keybed_sprite(n)
     local row = sprite[sprite_y]
     if row then
       for sprite_x = 1, KEYBED_WIDTH do
-        local grid_x = sprite_x
-        local grid_y = sprite_y
-        if grid_x <= KEYBED_WIDTH and grid_y <= KEYBED_HEIGHT and row[sprite_x] and row[sprite_x] > 0 then
-          grid_led(grid_x, grid_y, row[sprite_x])
+        if sprite_x <= KEYBED_WIDTH and sprite_y <= KEYBED_HEIGHT and row[sprite_x] and row[sprite_x] > 0 then
+          grid_led(sprite_x, sprite_y, row[sprite_x])
         end
       end
     end
@@ -856,10 +840,8 @@ end
 function render_settings_layer(x, y)
   local zone = PRIMARY_DISPLAY[y][x]
   if zone == 1 then
-    local x_offset = 11
-    local y_offset = 2
-    local layer_y = y - y_offset
-    local layer_x = x - x_offset
+    local layer_y = y - 1
+    local layer_x = x - KEYBED_WIDTH
     if layer_y >= 1 and layer_y <= #settings_layer and
         layer_x >= 1 and layer_x <= #settings_layer[layer_y] then
       local menu_layer_zone = settings_layer[layer_y][layer_x]
@@ -881,11 +863,7 @@ function render_settings_layer(x, y)
 end
 
 function update_grid_leds()
-  for x = 1, MAX_X do
-    for y = 1, MAX_Y do
-      grid_led(x, y, 0)
-    end
-  end
+  grid_led_all(0)
 
   if keybed_edit_button_held then
     render_keybed_sprite(active_keybed_sprite)
