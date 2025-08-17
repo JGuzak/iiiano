@@ -4,6 +4,8 @@ A usb midi keyboard iii script for Grid Zeros and Ones
 
 ![Grid One Main view](/images/init_view.png)
 
+## [User Manual](/manual.md)
+
 ## Prerequisites
 
 * Python 3.11
@@ -15,7 +17,9 @@ Follow `diii` install steps from the [monome iii repo](https://github.com/monome
 
 ## How to Install
 
-Run `diii upload iiiano.lua`
+1. Run `diii` from your commandline of choice
+2. Run `^^c` to clear the currently installed script !This step is important, there is a bug causing issues flashing without a clear first!
+3. Run `u iiiano.lua` to upload the script
 
 ## Features
 
@@ -39,24 +43,18 @@ Run `diii upload iiiano.lua`
 * Add [grid diagrams](https://tyleretters.github.io/GridStation/) to readme
 * Document features
 
-## Manual
+## Troubleshooting
 
-### Control Layout
-
-![One Grid UI]()
+If you run into problems, please [submit issues here](https://github.com/JGuzak/iiiano/issues)
 
 ## Idea Brainstorm
 
-* Selectable scale
-* Change root note select and keybed layout UI from zones to accessible while holding a button in the settings zone
-* Adjust keybed grid size from 8x11 to 8x12?
+* Note hold
 * Rotatable keyboard
 * Adjustable velocity
-  * Set static velocity
   * Random velocity with range control and randomness distrobution adjustment
 * Zero support
   * Pageable settings should just be visible all the time on the top 8x16
   * Shift all the regular iiiano controls down to bottom 8x16
 * MIDI clock input
-* Sequencer
 * Arp

@@ -28,65 +28,36 @@ Watch this comprehensive video tutorial to see iiiano in action:
 - iii firmware version 250114 or newer
 - Python 3.11
 
-### Installation
+## How to Install
 
-1. Follow the `diii` installation steps from the [monome iii repository](https://github.com/monome/iii)
-2. Run `diii upload iiiano.lua` to install the script
+1. Run `diii` from your commandline of choice
+2. Run `^^c` to clear the currently installed script *!This step is important, there is a bug causing issues flashing without a clear first!*
+3. Run `u iiiano.lua` to upload the script
 
-## Interface Layout
+## Interface Regions
 
-The Grid interface is divided into two main sections:
+The Grid interface is divided into three main regions:
 
-- **Left Section (Columns 1-12)**: Musical keybed for playing notes
-- **Right Section (Columns 13-16)**: Settings and control panel
-
-![Grid Layout Diagram](images/grid_layout.png)
-
-### Grid Coordinate System
-
-- **Rows**: A (top) through H (bottom)
-- **Columns**: 1 (left) through 16 (right)
-
-### Brightness Levels
-
-- **Brightness 15**: Active selection or root notes
-- **Brightness 10**: Root notes in keybed
-- **Brightness 6**: Notes in current scale
-- **Brightness 2-4**: Inactive controls or secondary elements
-- **Brightness 0**: Off/unused areas
+| Keybed | Layer | Layer Select |
+| - | - | - |
+| ![keybed region](images/region_keybed.png) | ![layer region](images/region_layer.png) | ![layer select region](images/region_layer_select.png) |
 
 ## Core Features
 
-### Musical Keybed (Columns 1-12)
+### Keybed (Columns 1-12)
 
-The keybed provides a grid-based interface for playing musical notes with visual feedback.
+The keybed provides a grid-based interface for playing notes with visual feedback.
 
-![Keybed Interface](images/keybed_interface.png)
-
-#### Key Features
+![Keybed UI](images/keybed_ui.png)
 
 - **Root Note Highlighting**: Root notes appear at maximum brightness `15`
 - **Scale Note Highlighting**: Notes in the current scale appear at medium brightness `6`
 - **Same-Note Highlighting**: When a note is pressed, all instances of that note class are highlighted
 - **Velocity Feedback**: Pressed keys display brightness corresponding to their velocity value
 
-#### Keybed Layout Modes
+### Layer Select (Columns 13-16)
 
-- **Octave Mode**: Each row represents a full octave (12 semitones)
-
-![Keybed Layout oct](images/keybed_layout_oct.png)
-
-- **3rds Mode**: Each row is offset by a major third (4 semitones)
-
-![Keybed Layout 3rd](images/keybed_layout_3rd.png)
-
-- **4ths Mode**: Each row is offset by a perfect fourth (5 semitones)
-
-![Keybed Layout 4th](images/keybed_layout_4th.png)
-
-### Settings Panel (Columns 13-16)
-
-The settings panel contains three main layers accessible via the top row:
+The layer selection zone contains three main layers accessible via the top row:
 
 ![Settings Panel Overview](images/settings_panel.png)
 
@@ -132,9 +103,9 @@ Static velocity selection with 16 levels ranging from 10 to 127:
 
 The currently selected velocity blinks between maximum brightness and dim brightness to indicate selection.
 
-## Keybed Edit Layer
+## Keybed Layer
 
-![Keybed Edit settings](images/keybed_edit_settings.png)
+![Keybed layer settings](images/keybed_layer_ui.png)
 
 Access the Keybed Edit Layer by pressing the button at position 15A.
 
@@ -165,13 +136,25 @@ Choose from 10 available scales:
 
 ### Keybed Layout Selection
 
-![Layout Mode Selection](images/select_keybed_layout_3rds.png)
+#### Keybed Layout Modes
 
 | Position | Layout Mode |
 |----------|-------------|
 | 14H | Octave |
 | 15H | 3rds |
 | 16H | 4ths |
+
+- **Octave Mode**: Each row represents a full octave (12 semitones)
+
+![Keybed Layout oct](images/select_keybed_layout_oct.png)
+
+- **3rds Mode**: Each row is offset by a major third (4 semitones)
+
+![Keybed Layout 3rds](images/select_keybed_layout_3rds.png)
+
+- **4ths Mode**: Each row is offset by a perfect fourth (5 semitones)
+
+![Keybed Layout 4ths](images/select_keybed_layout_4ths.png)
 
 ### In-Key Mode Toggle
 
@@ -190,7 +173,7 @@ Toggle between:
 
 Access the MIDI Layer by pressing the button at position 16A.
 
-![MIDI Layer Interface](images/midi_settings.png)
+![MIDI Layer Interface](images/midi_layer_ui.png)
 
 ### MIDI Channel Selection
 
