@@ -2,7 +2,7 @@
 
 A usb midi keyboard iii script for Grid Zeros and Ones
 
-![Grid One Main view](/images/main_view.png)
+![Grid One Main view](/images/init_view.png)
 
 ## Prerequisites
 
@@ -44,8 +44,6 @@ Run `diii upload iiiano.lua`
 ### Control Layout
 
 ![One Grid UI]()
-
-![Zero Grid UI]()
 
 ## Idea Brainstorm
 
