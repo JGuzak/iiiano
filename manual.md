@@ -1,6 +1,30 @@
-# iiiano User Manual
+- [Technical Specifications](#technical-specifications)
+- [Prerequisites \& Installation](#prerequisites--installation)
+  - [Hardware Requirements](#hardware-requirements)
+- [How to Install](#how-to-install)
+- [Interface Regions](#interface-regions)
+- [Core Features](#core-features)
+  - [Keybed (Columns 1-12)](#keybed-columns-1-12)
+  - [Layer Select (Columns 13-16)](#layer-select-columns-13-16)
+    - [Settings Layer Selection](#settings-layer-selection)
+- [Performance Layer](#performance-layer)
+  - [Transpose Control](#transpose-control)
+  - [Note Hold](#note-hold)
+  - [Velocity Control](#velocity-control)
+- [Keybed Layer](#keybed-layer)
+  - [Root Note Selection](#root-note-selection)
+  - [Scale Selection](#scale-selection)
+  - [Keybed Layout Selection](#keybed-layout-selection)
+    - [Keybed Layout Modes](#keybed-layout-modes)
+  - [In-Key Mode Toggle](#in-key-mode-toggle)
+- [MIDI Layer](#midi-layer)
+  - [MIDI Channel Selection](#midi-channel-selection)
+  - [MIDI Panic](#midi-panic)
+- [Troubleshooting](#troubleshooting)
+  - [No MIDI Output](#no-midi-output)
+  - [Unexpected Note Layout](#unexpected-note-layout)
+  - [Notes Stuck On](#notes-stuck-on)
 
-## Overview
 
 iiiano is a USB MIDI keyboard script for Monome Grid devices that transforms your Grid One or Zero into a versatile musical instrument. The script provides an 8x12 keybed with multiple layout modes, scale selection, velocity control, and comprehensive MIDI functionality.
 
@@ -88,18 +112,26 @@ Access the Performance Layer by pressing `13A`.
 
 Current transpose level is indicated by button brightness
 
+### Note Hold
+
+![Select note hold](images/select_note_hold.png)
+
 ### Velocity Control
 
-Static velocity selection with 16 levels ranging from 10 to 127:
+There are two velocity modes available; `static` and `random`. When using `static` velocity, select one of 16 levels in the bottom 4x4 square on the layer:.
 
 ![Velocity Selection Grid](images/select_16_velocities.png)
 
-| Row | Columns | Velocity Levels |
-|-----|---------|-----------------|
-| E | 13-16 | Levels 13-16 (highest) |
-| F | 13-16 | Levels 9-12 |
-| G | 13-16 | Levels 5-8 |
-| H | 13-16 | Levels 1-4 (lowest) |
+| - | 13 | 14 | 15 | 16 |
+| - | -- | -- | -- | -- |
+| A | | | | |
+| B | |  | | |
+| C | | | | |
+| D | | | | |
+| E | | | | |
+| F | | | | |
+| G | | | | |
+| H | 10 | | | |
 
 The currently selected velocity blinks between maximum brightness and dim brightness to indicate selection.
 
@@ -108,6 +140,17 @@ The currently selected velocity blinks between maximum brightness and dim bright
 ![Keybed layer settings](images/keybed_layer_ui.png)
 
 Access the Keybed Edit Layer by pressing the button at position 15A.
+
+| - | 13 | 14 | 15 | 16 |
+| - | -- | -- | -- | -- |
+| A | | | | |
+| B | Major | Dorian |  |  |
+| C | | | | |
+| D | | | | |
+| E | C | C# | D | D# |
+| F | E | F | G | G# |
+| G | A | A# | B | |
+| H | | Octave | 3rds | 4ths |
 
 ### Root Note Selection
 

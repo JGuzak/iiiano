@@ -460,8 +460,8 @@ local scales_order={"major","dorian","phrygian","lydian","mixolydian","minor","l
 -- 0: the keybed
 -- 1: the active settings layer
 -- 2-11: settings layer selection
---  2: performance layer
---  3: keybed edit layer
+-- 2: performance layer
+-- 3: keybed edit layer
 local PRIMARY_DISPLAY={
 	{0,0,0,0,0,0,0,0,0,0,0,0,-1,2,2,2},
 	{0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1},
@@ -534,11 +534,18 @@ local transposed_cache={}
 local settings_layer=SETTINGS_LAYERS[LAYER_ORDER[1]]
 local midi_channel=1
 local midi_panic_held=false
+-- function render()
+-- 	grid_refresh()
+-- 	print("render")
+-- end
 function init()
 	transposed_cache=SCALES[current_scale]
 	static_velocity_metro_id=metro.new(render_selected_velocity,VELOCITY_METRO_RATE_MS)
+	-- render_metr_id=metro.new(render,15)
 	grid_led_all(0)
-	update_grid_leds()
+	update_keybed_leds()
+	update_layer_leds()
+	grid_refresh()
 end
 function get_key_id(x,y)
 	return x*100+y
@@ -568,28 +575,6 @@ function is_note_in_scale(midi_note)
 	local note_index=(midi_note%12)+1
 	return transposed_cache[note_index]==1
 end
-function highlight_same_notes()
-	local pressed_note_classes={}
-	for key_id,key_data in pairs(pressed_keys) do
-		local note_class=key_data.note%12
-		pressed_note_classes[note_class]=true
-	end
-	for x=1,KEYBED_WIDTH do
-		for y=1,KEYBED_HEIGHT do
-			if PRIMARY_DISPLAY[y][x]==0 then
-				local midi_note=calculate_midi_note(x,y)
-				local note_class=midi_note%12
-				if pressed_keys[get_key_id(x,y)] then
-					grid_led(x,y,get_velocity_index_from_velocity(static_velocity))
-				elseif pressed_note_classes[note_class] then
-					grid_led(x,y,clamp(get_velocity_index_from_velocity(static_velocity)-1,1,16))
-				else
-					render_unpressed_key(x,y)
-				end
-			end
-		end
-	end
-end
 function render_unpressed_key(x,y)
 	local midi_note=calculate_midi_note(x,y)
 	local brightness=0
@@ -602,15 +587,21 @@ function render_unpressed_key(x,y)
 	grid_led(x,y,brightness)
 end
 function render_keybed()
+	local pressed_note_classes={}
+	for key_id,key_data in pairs(pressed_keys) do
+		local note_class=key_data.note%12
+		pressed_note_classes[note_class]=true
+	end
 	for x=1,KEYBED_WIDTH do
 		for y=1,KEYBED_HEIGHT do
-			if PRIMARY_DISPLAY[y][x]==0 then
-				local key_id=get_key_id(x,y)
-				if pressed_keys[key_id] then
-					grid_led(x,y,get_velocity_index_from_velocity(pressed_keys[key_id].velocity))
-				else
-					render_unpressed_key(x,y)
-				end
+			local midi_note=calculate_midi_note(x,y)
+			local note_class=midi_note%12
+			if pressed_keys[get_key_id(x,y)] then
+				grid_led(x,y,get_velocity_index_from_velocity(static_velocity))
+			elseif pressed_note_classes[note_class] then
+				grid_led(x,y,clamp(get_velocity_index_from_velocity(static_velocity)-1,1,16))
+			else
+				render_unpressed_key(x,y)
 			end
 		end
 	end
@@ -627,14 +618,14 @@ function handle_keybed_press(x,y,z)
 		end
 		midi_note_on(midi_note,note_velocity,midi_channel)
 		pressed_keys[key_id]={x=x,y=y,note=midi_note,velocity=note_velocity,channel=midi_channel}
-		highlight_same_notes()
 	elseif pressed_keys[key_id] then
 		if note_hold == false then
 			midi_note_off(pressed_keys[key_id].note,0,midi_channel)
 			pressed_keys[key_id]=nil
 		end
-		highlight_same_notes()
 	end
+
+	update_keybed_leds()
 	grid_refresh()
 end
 function get_velocity_index(x,y)
@@ -805,9 +796,10 @@ function handle_note_hold_press(x,y,z)
 	end
 	if note_hold==false then
 		for k, v in pairs(pressed_keys) do
-			midi_note_off(v.note,v.velocity,v.channel)
+			midi_note_off(v.note,0,v.channel)
 			pressed_keys[k]=nil
 		end
+		update_keybed_leds()
 	end
 end
 function render_transpose_select(x,y)
@@ -850,7 +842,8 @@ function handle_performance_layer_press(x,y,z,zone)
 		elseif zone==5 then
 			handle_note_hold_press(x,y,z)
 		end
-		update_grid_leds()
+		update_layer_leds()
+		grid_refresh()
 	end
 end
 function render_keybed_layer(x,y,zone)
@@ -879,7 +872,9 @@ function handle_keybed_layer_press(x,y,z,zone)
 	else
 		sprite_active=false
 	end
-	update_grid_leds()
+	update_keybed_leds()
+	update_layer_leds()
+	grid_refresh()
 end
 function get_midi_channel_from_button_pos(x,y)
 	local channel=((y-5)*4)+(x-KEYBED_WIDTH)
@@ -925,7 +920,9 @@ function handle_midi_layer_press(x,y,z,zone)
 			sprite_active=false
 		end
 	end
-	update_grid_leds()
+	update_keybed_leds()
+	update_layer_leds()
+	grid_refresh()
 end
 function get_settings_layer_index(x,y)
 	if y==1 then
@@ -992,7 +989,8 @@ function handle_settings_layer_select_press(x,y,z)
 				metro.stop(static_velocity_metro_id)
 			end
 		end
-		update_grid_leds()
+		update_layer_leds()
+		grid_refresh()
 	end
 end
 function grid(x,y,z)
@@ -1026,14 +1024,15 @@ function render_keybed_sprite(n)
 		end
 	end
 end
-function update_grid_leds()
-	grid_led_all(0)
-
+function update_keybed_leds()
 	if sprite_active then
 		render_keybed_sprite(keybed_sprite)
 	else
 		render_keybed()
 	end
+	grid_refresh()
+end
+function update_layer_leds()
 	for x=KEYBED_WIDTH+1,MAX_X do
 		for y=1,MAX_Y do
 			local zone=PRIMARY_DISPLAY[y][x]
@@ -1043,7 +1042,6 @@ function update_grid_leds()
 		end
 	end
 	grid_refresh()
-	-- print_grid_led_state()
 end
 function print_grid_led_state()
 	print("```")
